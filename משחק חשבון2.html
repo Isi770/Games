@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>משחק חשבון מתקדם לכיתה א'</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@400;700&display=swap');
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Rubik', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #FFD1DC, #FFA07A, #98FB98, #87CEFA);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+            padding: 20px;
+        }
+        @keyframes gradient {
+            0% {background-position: 0% 50%;}
+            50% {background-position: 100% 50%;}
+            100% {background-position: 0% 50%;}
+        }
+        .game-container {
+            text-align: center;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 500px;
+            position: relative;
+        }
+        .header {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            text-align: right;
+            font-size: 14px;
+            color: #4169E1;
+        }
+        h1 {
+            color: #FF69B4;
+            font-size: 28px;
+            margin-bottom: 15px;
+            margin-top: 30px;
+            text-shadow: 1px 1px #FFD1DC;
+        }
+        #level {
+            font-size: 20px;
+            color: #4169E1;
+            margin-bottom: 10px;
+        }
+        #question {
+            font-size: 26px;
+            margin-bottom: 20px;
+            color: #4169E1;
+            font-weight: bold;
+        }
+        #answer {
+            font-size: 20px;
+            padding: 10px;
+            width: 80px;
+            border: 3px solid #FF69B4;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        #submit {
+            font-size: 20px;
+            padding: 10px 20px;
+            background-color: #FF69B4;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-bottom: 10px;
+        }
+        #submit:hover {
+            background-color: #FF1493;
+        }
+        #result {
+            font-size: 22px;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        .candy {
+            font-size: 30px;
+            position: fixed;
+            opacity: 0;
+            animation: fall 3s linear infinite;
+        }
+        @keyframes fall {
+            to { transform: translateY(100vh); opacity: 1; }
+        }
+        .copyright {
+            position: absolute;
+            bottom: 5px;
+            left: 0;
+            right: 0;
+            font-size: 10px;
+            color: #666;
+        }
+        @media (max-width: 480px) {
+            h1 { font-size: 24px; }
+            #level { font-size: 18px; }
+            #question { font-size: 22px; }
+            #answer, #submit { font-size: 18px; }
+            #result { font-size: 20px; }
+            .header { font-size: 12px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <span id="bh-date">ב"ה</span>
+        </div>
+        <h1>משחק חשבון מתקדם לכיתה א'</h1>
+        <div id="level">שלב: 1</div>
+        <div id="question"></div>
+        <input type="number" id="answer" min="0" max="100">
+        <button id="submit">בדוק</button>
+        <div id="result"></div>
+        <div class="copyright">כל הזכויות שמורות לשטערני מושקא ויוספי סעדון</div>
+    </div>
+
+    <script>
+        let num1, num2, correctAnswer;
+        let currentLevel = 1;
+        let correctAnswers = 0;
+
+        function generateQuestion() {
+            const levelConfig = {
+                1: { max: 5, op: '+' },
+                2: { max: 10, op: '+' },
+                3: { max: 10, op: '-' },
+                4: { max: 20, op: '+' },
+                5: { max: 20, op: '-' }
+            };
+
+            const config = levelConfig[currentLevel];
+            num1 = Math.floor(Math.random() * config.max) + 1;
+            num2 = Math.floor(Math.random() * config.max) + 1;
+
+            if (config.op === '-' && num1 < num2) {
+                [num1, num2] = [num2, num1]; // Swap to ensure positive result
+            }
+
+            correctAnswer = config.op === '+' ? num1 + num2 : num1 - num2;
+            document.getElementById('question').textContent = `${num1} ${config.op} ${num2} = ?`;
+            document.getElementById('answer').value = '';
+            document.getElementById('result').textContent = '';
+            document.getElementById('level').textContent = `שלב: ${currentLevel}`;
+        }
+
+        function checkAnswer() {
+            const userAnswer = parseInt(document.getElementById('answer').value);
+            const resultElement = document.getElementById('result');
+            
+            if (userAnswer === correctAnswer) {
+                resultElement.textContent = 'כל הכבוד! תשובה נכונה!';
+                resultElement.style.color = '#4CAF50';
+                correctAnswers++;
+                if (correctAnswers === 5 && currentLevel < 5) {
+                    currentLevel++;
+                    correctAnswers = 0;
+                    resultElement.textContent += ' עברת לשלב הבא!';
+                }
+                createCandies();
+                setTimeout(generateQuestion, 2000);
+            } else {
+                const difference = Math.abs(userAnswer - correctAnswer);
+                let feedback;
+                if (difference <= 2) {
+                    feedback = 'כמעט! נסה שוב, אתה קרוב!';
+                } else {
+                    feedback = 'לא בדיוק, אבל אל תתייאש! בוא ננסה שוב.';
+                }
+                resultElement.textContent = feedback;
+                resultElement.style.color = '#FF69B4';
+            }
+        }
+
+        function createCandies() {
+            const candies = ['🍬', '🍭', '🍫', '🍩', '🧁', '🍪'];
+            for (let i = 0; i < 10; i++) {
+                const candy = document.createElement('div');
+                candy.className = 'candy';
+                candy.style.left = Math.random() * 100 + 'vw';
+                candy.style.animationDuration = (Math.random() * 2 + 3) + 's';
+                candy.textContent = candies[Math.floor(Math.random() * candies.length)];
+                document.body.appendChild(candy);
+                setTimeout(() => candy.remove(), 3000);
+            }
+        }
+
+        function setHebrewDate() {
+            const now = new Date();
+            const formatter = new Intl.DateTimeFormat('he-IL-u-ca-hebrew', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+            const parts = formatter.formatToParts(now);
+            let day = parts.find(part => part.type === 'day').value;
+            const month = parts.find(part => part.type === 'month').value;
+            
+            // Convert day to Hebrew letters
+            const hebrewNumerals = ['', 'א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ז', 'ח', 'ט', 
+                                    'י', 'יא', 'יב', 'יג', 'יד', 'טו', 'טז', 'יז', 'יח', 'יט',
+                                    'כ', 'כא', 'כב', 'כג', 'כד', 'כה', 'כו', 'כז', 'כח', 'כט', 'ל'];
+            day = hebrewNumerals[parseInt(day)];
+
+            // Set the current Hebrew year (5784 for 2023-2024)
+            const hebrewYear = "תשפ\"ד";
+
+            document.getElementById('bh-date').textContent = `ב"ה • ${day} ${month} ה'${hebrewYear}`;
+        }
+
+        document.getElementById('submit').addEventListener('click', checkAnswer);
+        generateQuestion();
+        setHebrewDate();
+    </script>
+</body>
+</html>
